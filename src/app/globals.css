@@ -46,7 +46,7 @@
 
   --animate-year-in: year-in 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both;
   --animate-modal-in: year-in 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) both;
-  --animate-tagline-shine: tagline-shine 10s linear infinite;
+  --animate-tagline-shine: tagline-shine 5s linear infinite;
 
   @keyframes year-in {
     from {
@@ -59,9 +59,10 @@
     }
   }
 
+  /* Pausa 2 s y barrido de 3 s (misma velocidad de antes), cada 5 s */
   @keyframes tagline-shine {
     0%,
-    70% {
+    40% {
       background-position: 200% 0;
     }
     100% {
