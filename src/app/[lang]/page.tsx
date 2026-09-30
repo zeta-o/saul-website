@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -14,14 +14,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
   return (
     <main className="relative h-svh min-h-[520px] overflow-hidden bg-black">
-      <Image
-        src="/images/hero-bg-2011.png"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="z-1 object-cover"
-      />
+      <HeroBackground />
       <div className="absolute inset-x-0 bottom-0 z-2 h-[68%] bg-[linear-gradient(to_top,rgba(8,8,8,1),rgba(15,15,15,0))]" />
 
       <div className="absolute top-4 left-4 z-10 md:top-6 md:left-8">
@@ -63,5 +56,27 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         </p>
       </div>
     </main>
+  );
+}
+
+/**
+ * Fondo del hero con dirección de arte: en pantallas verticales usa la versión
+ * vertical (2011 completo y horizontal, ciclista en portrait); en horizontales, la original.
+ */
+function HeroBackground() {
+  const common = { alt: "", fill: true, priority: true, sizes: "100vw" };
+  const {
+    props: { srcSet: portrait },
+  } = getImageProps({ ...common, src: "/images/hero-bg-2011-mobile.webp" });
+  const {
+    props: { srcSet: landscape, alt, ...rest },
+  } = getImageProps({ ...common, src: "/images/hero-bg-2011.png" });
+
+  return (
+    <picture>
+      <source media="(orientation: portrait)" srcSet={portrait} />
+      <source media="(orientation: landscape)" srcSet={landscape} />
+      <img {...rest} alt={alt} className="z-1 object-cover" />
+    </picture>
   );
 }
