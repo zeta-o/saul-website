@@ -23,7 +23,6 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
     metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
     title: { default: "Saúl Vargas — Ciclista", template: "%s · Saúl Vargas" },
     description: description[l],
-    icons: { icon: "/images/logo.png" },
     alternates: { languages: { es: "/es", en: "/en" } },
     openGraph: {
       title: "Saúl Vargas",
