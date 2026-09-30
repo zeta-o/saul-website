@@ -30,6 +30,9 @@ export const nav = {
   en: { inicio: "Home", sobreMi: "About", galeria: "Gallery", stats: "My stats", contacto: "Contact", menu: "Menu" },
 } satisfies Record<Locale, Record<string, string>>;
 
-export const TAGLINE = "Sin Miedo · Sin Atajos · Sin Excusas";
+export const TAGLINE = {
+  es: "Sin Miedo · Sin Atajos · Sin Excusas",
+  en: "No Fear · No Shortcuts · No Excuses",
+} satisfies Record<Locale, string>;
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

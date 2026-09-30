@@ -13,7 +13,7 @@ export function generateStaticParams() {
 
 const description = {
   es: "Saúl Vargas, ciclista cadete de 14 años (ruta, TT y MTB) de Costa Rica. Sin Miedo · Sin Atajos · Sin Excusas.",
-  en: "Saúl Vargas, 14-year-old cadet cyclist (road, TT and MTB) from Costa Rica. Sin Miedo · Sin Atajos · Sin Excusas.",
+  en: "Saúl Vargas, 14-year-old cadet cyclist (road, TT and MTB) from Costa Rica. No Fear · No Shortcuts · No Excuses.",
 };
 
 export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Promise<Metadata> {

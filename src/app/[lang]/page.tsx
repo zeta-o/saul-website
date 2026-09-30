@@ -46,12 +46,12 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         />
         {/* Solapa el lema con el margen transparente del wordmark (-51px a 560px de ancho) */}
         <p className="relative mt-[calc(clamp(280px,42vw,560px)*-0.091)] inline-block text-center text-[clamp(15px,4.2vw,22px)] leading-none font-semibold tracking-[.08em] text-white/80 uppercase">
-          {TAGLINE}
+          {TAGLINE[lang]}
           <span
             aria-hidden="true"
             className="absolute inset-0 animate-tagline-shine bg-[linear-gradient(100deg,rgba(255,255,255,0)_40%,#fff_50%,rgba(255,255,255,0)_60%)] bg-size-[250%_100%] bg-clip-text bg-no-repeat text-transparent mix-blend-screen"
           >
-            {TAGLINE}
+            {TAGLINE[lang]}
           </span>
         </p>
       </div>
