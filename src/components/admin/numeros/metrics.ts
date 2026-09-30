@@ -1,4 +1,5 @@
 import type { MeasurementRow } from "@/lib/data/types";
+import type { Locale } from "@/lib/i18n";
 
 export type MetricKey = Exclude<keyof MeasurementRow, "id" | "fecha" | "notas">;
 
@@ -6,6 +7,7 @@ export type MetricKey = Exclude<keyof MeasurementRow, "id" | "fecha" | "notas">;
 export const METRICS: {
   key: MetricKey;
   label: string;
+  labelEn: string;
   unit: string;
   step: string;
   /** Si subir es bueno (colorea el cambio). null = neutral. */
@@ -14,29 +16,30 @@ export const METRICS: {
   power?: boolean;
   grupo: "Perfil" | "Potencia máxima" | "Carga de entrenamiento";
 }[] = [
-  { key: "peso_kg", label: "Peso", unit: "kg", step: "0.1", upIsGood: null, grupo: "Perfil" },
-  { key: "altura_m", label: "Altura", unit: "m", step: "0.01", upIsGood: null, grupo: "Perfil" },
-  { key: "ftp_w", label: "FTP", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Perfil" },
-  { key: "vo2max", label: "VO₂ máx", unit: "ml/kg/min", step: "0.1", upIsGood: true, grupo: "Perfil" },
-  { key: "p5s_w", label: "5 segundos", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
-  { key: "p1m_w", label: "1 minuto", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
-  { key: "p5m_w", label: "5 minutos", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
-  { key: "p20m_w", label: "20 minutos", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
-  { key: "horas_semana", label: "Volumen semanal", unit: "h", step: "0.5", upIsGood: null, grupo: "Carga de entrenamiento" },
-  { key: "km_semana", label: "Kilómetros / semana", unit: "km", step: "1", upIsGood: null, grupo: "Carga de entrenamiento" },
-  { key: "desnivel_semana_m", label: "Desnivel / semana", unit: "m", step: "10", upIsGood: null, grupo: "Carga de entrenamiento" },
-  { key: "carreras_temporada", label: "Carreras en la temporada", unit: "", step: "1", upIsGood: null, grupo: "Carga de entrenamiento" },
+  { key: "peso_kg", label: "Peso", labelEn: "Weight", unit: "kg", step: "0.1", upIsGood: null, grupo: "Perfil" },
+  { key: "altura_m", label: "Altura", labelEn: "Height", unit: "m", step: "0.01", upIsGood: null, grupo: "Perfil" },
+  { key: "ftp_w", label: "FTP", labelEn: "FTP", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Perfil" },
+  { key: "vo2max", label: "VO₂ máx", labelEn: "VO₂ max", unit: "ml/kg/min", step: "0.1", upIsGood: true, grupo: "Perfil" },
+  { key: "p5s_w", label: "5 segundos", labelEn: "5 seconds", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
+  { key: "p1m_w", label: "1 minuto", labelEn: "1 minute", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
+  { key: "p5m_w", label: "5 minutos", labelEn: "5 minutes", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
+  { key: "p20m_w", label: "20 minutos", labelEn: "20 minutes", unit: "W", step: "1", upIsGood: true, power: true, grupo: "Potencia máxima" },
+  { key: "horas_semana", label: "Volumen semanal", labelEn: "Weekly volume", unit: "h", step: "0.5", upIsGood: null, grupo: "Carga de entrenamiento" },
+  { key: "km_semana", label: "Kilómetros / semana", labelEn: "Km / week", unit: "km", step: "1", upIsGood: null, grupo: "Carga de entrenamiento" },
+  { key: "desnivel_semana_m", label: "Desnivel / semana", labelEn: "Elevation / week", unit: "m", step: "10", upIsGood: null, grupo: "Carga de entrenamiento" },
+  { key: "carreras_temporada", label: "Carreras en la temporada", labelEn: "Races this season", unit: "", step: "1", upIsGood: null, grupo: "Carga de entrenamiento" },
 ];
 
-/** Número con formato de Costa Rica ("4.800", "5,1"), igual en servidor y navegador. */
-export function nf(v: number, max = 1) {
+/** Número con formato de Costa Rica ("4.800", "5,1") o inglés ("4,800", "5.1"), igual en servidor y navegador. */
+export function nf(v: number, max = 1, lang: Locale = "es") {
   const [ent, dec] = Number(v.toFixed(max)).toString().split(".");
-  const miles = ent.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return dec ? `${miles},${dec}` : miles;
+  const [sepMiles, sepDec] = lang === "en" ? [",", "."] : [".", ","];
+  const miles = ent.replace(/\B(?=(\d{3})+(?!\d))/g, sepMiles);
+  return dec ? `${miles}${sepDec}${dec}` : miles;
 }
 
 /** Peso vigente en cada fecha (el último conocido), para expresar potencia en W/kg. */
-export function pesoVigente(rows: MeasurementRow[]) {
+export function pesoVigente(rows: Pick<MeasurementRow, "peso_kg">[]) {
   let peso: number | null = null;
   return rows.map((r) => (peso = r.peso_kg ?? peso));
 }

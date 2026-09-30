@@ -32,12 +32,12 @@ En local los correos (códigos de acceso) llegan a Mailpit: http://127.0.0.1:543
 | `/{es,en}` | Inicio (hero) |
 | `/{es,en}/sobre-mi` | Bio, "Mi equipo" (modal), línea de tiempo "Mi historia" (desde la base) |
 | `/{es,en}/galeria` | Galería filtrable Todas / Ruta / Montaña (desde la base) |
-| `/{es,en}/estadisticas` | Acceso restringido. "Solicitar acceso" guarda la solicitud; el login aún es simulado |
+| `/{es,en}/estadisticas` | Acceso restringido. Con sesión y acceso: últimos valores y gráficas de `measurements` (W o W/kg). Sin acceso: iniciar sesión o solicitar acceso |
 | `/{es,en}/contacto` | Contacto (no está en el menú, igual que en el diseño) |
 | `/admin` | Admin privado (no enlazado desde el sitio) |
 
 `src/proxy.ts` redirige `/` y rutas sin idioma según la cookie `NEXT_LOCALE` o, en la primera
-visita, el header `Accept-Language`. En `/admin` solo refresca la sesión de Supabase.
+visita, el header `Accept-Language`. En `/admin` y `/{es,en}/estadisticas` refresca la sesión de Supabase.
 
 ## Admin (`/admin`)
 
@@ -61,6 +61,17 @@ que empieza con `## ` es un subtítulo.
 Al guardar galería o historia, las páginas públicas se actualizan al instante (`updateTag` sobre
 las etiquetas de caché `galeria` / `historia`); siguen siendo páginas estáticas.
 
+## Estadísticas para entrenadores
+
+1. La persona pide acceso en `/estadisticas` → queda en **Admin → Accesos** como pendiente.
+2. Al aprobarla (o con "Dar acceso"), su correo entra a `allowed_emails`.
+3. En `/estadisticas` → "Iniciar sesión" recibe un código (o un enlace, con el correo por defecto de
+   Supabase) y ve los números. Los admins entran igual, sin pedir acceso.
+4. Al revocar el acceso, la próxima visita vuelve a mostrar el candado.
+
+Las notas de cada medición no se muestran en la página (solo en el admin), pero RLS da la fila completa
+a quien tiene acceso: no escribir en ellas nada que un entrenador no deba leer.
+
 ## Supabase
 
 - `supabase/migrations/…_admin.sql`: tablas, RLS, funciones `is_admin()` / `is_admin_email()` y bucket
@@ -71,7 +82,8 @@ las etiquetas de caché `galeria` / `historia`); siguen siendo páginas estátic
   nuevos de Supabase no los dan solos; sin ellos el sitio cae al contenido estático y el admin no guarda.
 - `supabase/templates/codigo.html`: correo con el código (`{{ .Token }}`).
 
-Lectura pública: galería, historia y posts publicados. Mediciones, solicitudes y accesos: solo admin.
+Lectura pública: galería, historia y posts publicados. Mediciones: admin y correos de `allowed_emails`
+(`is_allowed()`, migración `…_estadisticas.sql`). Solicitudes y accesos: solo admin.
 Cualquiera puede **crear** una solicitud (estado `pendiente`), nadie puede leerlas sin ser admin.
 
 ### Producción
@@ -113,8 +125,6 @@ supabase/               config local, migraciones, plantilla de correo, seed loc
 
 ## Pendiente
 
-- Página de estadísticas para entrenadores con acceso (login real contra `allowed_emails` y
-  lectura de `measurements` con RLS). Hoy el login de `/estadisticas` es simulado.
 - Página pública del blog.
 - Aviso por correo al admin cuando llega una solicitud, y a quienes aceptan actualizaciones.
 - Contenido: fotos reales, fotógrafos, fotos de bicicletas (`EQUIPO`), URLs de redes (`src/content/social.ts`).

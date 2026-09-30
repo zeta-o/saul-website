@@ -28,6 +28,8 @@ export async function proxy(request: NextRequest) {
   const hasPrefix = locales.some(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );
+  // Estadísticas: sesión de entrenadores con acceso.
+  if (hasPrefix && /^\/[a-z]{2}\/estadisticas(\/|$)/.test(pathname)) return updateSession(request);
   if (hasPrefix) return;
 
   request.nextUrl.pathname = `/${getLocale(request)}${pathname}`;
