@@ -67,7 +67,7 @@ function HeroBackground() {
   const common = { alt: "", fill: true, priority: true, sizes: "100vw" };
   const {
     props: { srcSet: portrait },
-  } = getImageProps({ ...common, src: "/images/hero-bg-2011-mobile.webp" });
+  } = getImageProps({ ...common, src: "/images/hero-bg-2011-portrait.webp" });
   const {
     props: { srcSet: landscape, alt, ...rest },
   } = getImageProps({ ...common, src: "/images/hero-bg-2011.png" });
