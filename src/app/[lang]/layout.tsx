@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
     openGraph: {
       title: "Saúl Vargas",
       description: description[l],
-      images: ["/images/hero-bg-2011.png"],
+      images: ["/images/hero-bg-2011-landscape.webp"],
       locale: l === "es" ? "es_CR" : "en_US",
       type: "website",
     },

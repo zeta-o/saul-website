@@ -70,7 +70,7 @@ function HeroBackground() {
   } = getImageProps({ ...common, src: "/images/hero-bg-2011-portrait.webp" });
   const {
     props: { srcSet: landscape, alt, ...rest },
-  } = getImageProps({ ...common, src: "/images/hero-bg-2011.png" });
+  } = getImageProps({ ...common, src: "/images/hero-bg-2011-landscape.webp" });
 
   return (
     <picture>
