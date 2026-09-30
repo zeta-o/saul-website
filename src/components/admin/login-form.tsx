@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 
 const notaCls = "text-sm leading-[1.45] text-white/55";
 
-export function LoginForm() {
+export function LoginForm({ errorInicial }: { errorInicial?: string }) {
   const [correo, setCorreo] = useState("");
   const [codigo, setCodigo] = useState("");
-  const [state, setState] = useState<LoginState>({});
+  const [state, setState] = useState<LoginState>({ error: errorInicial });
   const [pending, startTransition] = useTransition();
 
   const submit = (e: React.FormEvent) => {
@@ -35,7 +35,7 @@ export function LoginForm() {
       />
       {!state.enviado ? (
         <>
-          <span className={notaCls}>Si tu correo tiene acceso, te enviaremos un código de 6 dígitos.</span>
+          <span className={notaCls}>Si tu correo tiene acceso, te enviaremos un código de 6 dígitos o un enlace para entrar.</span>
           <Button type="submit" disabled={pending} className="mt-1.5 self-start">
             {pending ? "Enviando…" : "Recibir código"}
           </Button>
@@ -54,7 +54,7 @@ export function LoginForm() {
             className="tracking-[.2em]"
           />
           <span className={notaCls}>
-            Revisa tu correo (y la carpeta de spam). El código vence en 10 minutos.
+            Revisa tu correo (y la carpeta de spam). Escribe el código o abre el enlace en este mismo navegador. Vence en 10 minutos.
           </span>
           <div className="mt-1.5 flex items-center gap-4">
             <Button type="submit" disabled={pending}>
