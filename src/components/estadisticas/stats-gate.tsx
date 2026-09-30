@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
-import { solicitarAcceso } from "@/app/[lang]/estadisticas/actions";
+import { enviarCodigoStats, solicitarAcceso, verificarCodigoStats, type LoginError } from "@/app/[lang]/estadisticas/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -16,15 +16,19 @@ const eyebrowCls = "block text-xs leading-none font-semibold tracking-[.16em] te
 const notaCls = "text-sm leading-[1.45] text-white/55";
 const metricLabelCls = "text-[10px] leading-none font-semibold tracking-[.16em] uppercase";
 
-export function StatsGate({ lang }: { lang: Locale }) {
-  const unlocked = useStatsStore((s) => s.unlocked);
-  return unlocked ? <Unlocked lang={lang} /> : <Locked lang={lang} />;
-}
+export type StatsAviso = "enlace" | "sinAcceso";
 
-function Locked({ lang }: { lang: Locale }) {
+/** Página bloqueada: iniciar sesión (entrenadores con acceso) o solicitar acceso. */
+export function StatsGate({ lang, aviso }: { lang: Locale; aviso?: StatsAviso }) {
   const t = statsCopy[lang];
   const modo = useStatsStore((s) => s.modo);
   const setModo = useStatsStore((s) => s.setModo);
+  const setError = useStatsStore((s) => s.setError);
+
+  // Aviso que llega desde el servidor (enlace vencido, acceso revocado).
+  useEffect(() => {
+    if (aviso) setError(aviso === "enlace" ? t.errorEnlace : t.errorSinAcceso);
+  }, [aviso, setError, t]);
 
   return (
     <section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-12 px-4 pt-10 pb-24 md:px-8 md:pt-16 lg:grid-cols-2 lg:gap-16">
@@ -63,18 +67,37 @@ function Mensaje() {
 
 function LoginForm({ lang }: { lang: Locale }) {
   const t = statsCopy[lang];
-  const { correo, clave, codigoEnviado, setField, setError, codigoPedido, unlock } = useStatsStore();
+  const { correo, clave, codigoEnviado, setField, setError, codigoPedido, otroCorreo } = useStatsStore();
+  const [pending, startTransition] = useTransition();
 
-  // Versión estática: simula el flujo del prototipo (sin envío real del código).
+  const mensaje: Record<LoginError, string> = {
+    correo: t.errorCorreo,
+    codigo: t.errorCodigo,
+    sinAcceso: t.errorSinAcceso,
+    limite: t.errorLimite,
+    servidor: t.errorServidor,
+  };
+
   const pedirCodigo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!EMAIL_RE.test(correo.trim())) return setError(t.errorCorreo);
-    codigoPedido();
+    startTransition(async () => {
+      const res = await enviarCodigoStats(correo, lang);
+      if (res.enviado) codigoPedido();
+      else if (res.error) setError(mensaje[res.error]);
+    });
   };
   const entrar = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clave.trim()) return setError(t.errorCodigo);
-    unlock();
+    if (!/^\d{6}$/.test(clave.replace(/\s/g, ""))) return setError(t.errorCodigo);
+    startTransition(async () => {
+      // Si el código es correcto, la acción redirige y la página se muestra desbloqueada.
+      const res = await verificarCodigoStats(correo, clave, lang);
+      if (res?.error) {
+        setError(mensaje[res.error]);
+        if (res.error === "sinAcceso") otroCorreo();
+      }
+    });
   };
 
   return (
@@ -86,19 +109,14 @@ function LoginForm({ lang }: { lang: Locale }) {
         onChange={(e) => setField("correo", e.target.value)}
         placeholder={t.correoLabel}
         aria-label={t.correoLabel}
+        readOnly={codigoEnviado}
+        className={codigoEnviado ? "opacity-60" : undefined}
       />
       {!codigoEnviado ? (
         <>
           <span className={notaCls}>{t.loginNota}</span>
-          <Button type="submit" className="mt-1.5 self-start">{t.enviarCodigo}</Button>
-          <div className="my-0.5 flex items-center gap-3">
-            <span className="h-px flex-1 bg-white/18" />
-            <span className="text-xs leading-none font-semibold tracking-[.14em] text-white/45 uppercase">{t.o}</span>
-            <span className="h-px flex-1 bg-white/18" />
-          </div>
-          <Button type="button" variant="google" size="google" className="mt-0.5 w-full" onClick={unlock}>
-            <GoogleLogo />
-            {t.google}
+          <Button type="submit" disabled={pending} className="mt-1.5 self-start">
+            {pending ? t.enviandoCodigo : t.enviarCodigo}
           </Button>
         </>
       ) : (
@@ -108,6 +126,7 @@ function LoginForm({ lang }: { lang: Locale }) {
             inputMode="numeric"
             autoComplete="one-time-code"
             autoFocus
+            maxLength={6}
             value={clave}
             onChange={(e) => setField("clave", e.target.value)}
             placeholder={t.claveLabel}
@@ -115,7 +134,18 @@ function LoginForm({ lang }: { lang: Locale }) {
             className="tracking-[.2em]"
           />
           <span className={notaCls}>{t.codigoNota}</span>
-          <Button type="submit" className="mt-1.5 self-start">{t.entrar}</Button>
+          <div className="mt-1.5 flex items-center gap-4">
+            <Button type="submit" disabled={pending}>
+              {pending ? t.verificando : t.entrar}
+            </Button>
+            <button
+              type="button"
+              onClick={otroCorreo}
+              className="cursor-pointer text-sm text-white/55 underline-offset-4 hover:text-white hover:underline"
+            >
+              {t.otroCorreo}
+            </button>
+          </div>
         </>
       )}
       <Mensaje />
@@ -189,42 +219,5 @@ function Teaser({ lang }: { lang: Locale }) {
         <span className="text-[13px] leading-none font-semibold tracking-[.18em] text-white/85 uppercase">{t.bloqueado}</span>
       </div>
     </div>
-  );
-}
-
-function Unlocked({ lang }: { lang: Locale }) {
-  const t = statsCopy[lang];
-  const groups = STATS[lang];
-  return (
-    <section className="mx-auto max-w-[1200px] animate-year-in px-4 pt-12 pb-24 md:px-8">
-      <span className={`${eyebrowCls} mb-3`}>{t.accesoOk}</span>
-      <PageTitle className="mb-9">{nav[lang].stats}</PageTitle>
-      {groups.map((g) => (
-        <div key={g.titulo} className="mb-10">
-          <h2 className="mt-0 mb-[18px] text-[11px] leading-none font-semibold tracking-[.16em] text-white/50 uppercase">{g.titulo}</h2>
-          <dl className="m-0 grid grid-cols-2 gap-6 md:grid-cols-4">
-            {g.metrics.map((m) => (
-              <div key={m.label} className="flex flex-col gap-1.5 border-t-2 border-brand-blue pt-3">
-                <dt className={`${metricLabelCls} text-white/50`}>{m.label}</dt>
-                <dd className="m-0 text-[32px] leading-none font-bold text-white">{m.value}</dd>
-                {m.nota && <dd className="m-0 text-sm leading-[1.3] font-medium text-white/55">{m.nota}</dd>}
-              </div>
-            ))}
-          </dl>
-        </div>
-      ))}
-      <p className="m-0 max-w-[560px] text-[15px] leading-[1.5] text-white/50">{t.disclaimer}</p>
-    </section>
-  );
-}
-
-function GoogleLogo() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.3h12.1c-.2 2-1.6 5-4.5 7l-.1.3 6.6 5.1.4.1c4.2-3.9 6.6-9.6 6.6-15.8z" />
-      <path fill="#34A853" d="M24 46c6 0 11-2 14.6-5.4l-7-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.8-3.8-12.5-9.1l-.3.1-6.9 5.3-.1.3C7.8 41 15.3 46 24 46z" />
-      <path fill="#FBBC05" d="M11.5 28.3c-.5-1.4-.7-2.8-.7-4.3s.3-3 .7-4.3v-.4l-7-5.4-.2.1A22 22 0 0 0 2 24c0 3.6.9 6.9 2.3 9.9l7.2-5.6z" />
-      <path fill="#EA4335" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 30 1.4 24 1.4 15.3 1.4 7.8 6.4 4.3 13.7l7.2 5.6C13.2 13.9 18.2 9.5 24 9.5z" />
-    </svg>
   );
 }
