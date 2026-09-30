@@ -41,8 +41,10 @@ visita, el header `Accept-Language`. En `/admin` solo refresca la sesión de Sup
 
 ## Admin (`/admin`)
 
-Se entra con **código de 6 dígitos por correo** (Supabase Auth, OTP). Solo reciben código los
-correos de la tabla `admins`; la respuesta es la misma para cualquier correo.
+Se entra con **código de 6 dígitos por correo** (Supabase Auth, OTP). Solo reciben correo las
+direcciones de la tabla `admins`; la respuesta es la misma para cualquier correo. Si el correo trae
+un **enlace** en vez del código (plantilla por defecto de Supabase, ver abajo), el enlace lleva a
+`/admin/confirmar`, que abre la sesión; hay que abrirlo en el mismo navegador donde se pidió.
 
 | Sección | Qué hace |
 | --- | --- |
@@ -65,25 +67,32 @@ las etiquetas de caché `galeria` / `historia`); siguen siendo páginas estátic
   público `media` (fotos y videos; solo admins suben o borran).
 - `supabase/migrations/…_contenido_inicial.sql`: carga la historia y la galería actuales si las tablas
   están vacías. Se regenera desde `src/content` con `npm run db:semilla`.
+- `supabase/migrations/…_permisos.sql`: permisos de tabla para `anon` / `authenticated`. Los proyectos
+  nuevos de Supabase no los dan solos; sin ellos el sitio cae al contenido estático y el admin no guarda.
 - `supabase/templates/codigo.html`: correo con el código (`{{ .Token }}`).
 
 Lectura pública: galería, historia y posts publicados. Mediciones, solicitudes y accesos: solo admin.
 Cualquiera puede **crear** una solicitud (estado `pendiente`), nadie puede leerlas sin ser admin.
 
-### Puesta en producción
+### Producción
 
-1. Crear un proyecto en [supabase.com](https://supabase.com) (plan gratis).
-2. Aplicar las migraciones: `npx supabase login`, `npx supabase link --project-ref <ref>` y
-   `npx supabase db push` (o pegar los dos archivos de `supabase/migrations` en el SQL Editor, en orden).
-3. Dar de alta el/los admin: en el SQL Editor,
-   `insert into public.admins (email) values ('correo@dominio.com');`
-4. Authentication → Email Templates: en **Magic Link** y **Confirm signup** pegar el HTML de
-   `supabase/templates/codigo.html` (asunto: "Tu código de acceso · Saúl Vargas").
-   Authentication → Providers → Email: longitud del código 6 y vencimiento 600 s.
-5. Recomendado: Authentication → Emails → SMTP propio (p. ej. Resend). El correo incluido en
-   Supabase envía muy pocos mensajes por hora.
-6. En Vercel → Settings → Environment Variables: `NEXT_PUBLIC_SUPABASE_URL` y
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API). Volver a desplegar.
+Proyecto `mklizgshxdmenerfummd` (us-east-1), ya configurado:
+
+- Migraciones aplicadas (también registradas en `supabase_migrations`, así que `npx supabase db push`
+  solo aplica las nuevas).
+- Auth: código de 6 dígitos, vence en 600 s; Site URL `https://saulvargas.bike`; redirecciones
+  permitidas `https://saulvargas.bike/**`, `https://www.saulvargas.bike/**` y `http://localhost:3000/**`.
+- Admin: `insert into public.admins (email) values ('correo@dominio.com');` en el SQL Editor.
+
+Falta por hacer fuera del repo:
+
+1. En Vercel → Settings → Environment Variables: `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API) y `NEXT_PUBLIC_SITE_URL=https://saulvargas.bike`.
+   Volver a desplegar.
+2. Recomendado: SMTP propio (p. ej. Resend) en Authentication → Emails. En el plan gratis, con el
+   correo incluido, Supabase **no deja cambiar la plantilla** (llega un enlace en lugar del código) y
+   envía muy pocos correos por hora. Con SMTP, pegar `supabase/templates/codigo.html` en
+   Email Templates → **Magic Link** y **Confirm signup** (asunto: "Tu código de acceso · Saúl Vargas").
 
 ## Estructura
 

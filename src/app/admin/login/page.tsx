@@ -7,7 +7,8 @@ import { getAdmin } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Entrar" };
 
-export default async function AdminLoginPage() {
+export default async function AdminLoginPage({ searchParams }: PageProps<"/admin/login">) {
+  const { error } = await searchParams;
   if (await getAdmin()) redirect("/admin");
   return (
     <main className="flex min-h-svh items-center justify-center px-4 py-16">
@@ -19,7 +20,7 @@ export default async function AdminLoginPage() {
         <h1 className="mt-0 mb-6 text-[clamp(36px,5vw,48px)] leading-none font-extrabold tracking-[-.02em] uppercase italic">
           Entrar
         </h1>
-        <LoginForm />
+        <LoginForm errorInicial={error === "enlace" ? "El enlace no es válido o venció. Pide uno nuevo." : undefined} />
       </div>
     </main>
   );

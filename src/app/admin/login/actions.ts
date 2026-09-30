@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { EMAIL_RE } from "@/lib/i18n";
@@ -20,9 +21,11 @@ export async function enviarCodigo(correoRaw: string): Promise<LoginState> {
   const supabase = await createClient();
   const { data: esAdmin } = await supabase.rpc("is_admin_email", { p_email: correo });
   if (esAdmin) {
+    // Si el correo trae un enlace en vez del código (plantilla por defecto), vuelve a /admin/confirmar.
+    const origen = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL;
     const { error } = await supabase.auth.signInWithOtp({
       email: correo,
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, emailRedirectTo: origen ? `${origen}/admin/confirmar` : undefined },
     });
     if (error) {
       console.error("signInWithOtp:", error.message);
