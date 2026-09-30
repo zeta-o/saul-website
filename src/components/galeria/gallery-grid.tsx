@@ -2,13 +2,15 @@
 
 import { PhotoSlot } from "@/components/site/photo-slot";
 import { UnderlineTabs } from "@/components/site/tabs";
-import { GALLERY, galleryCopy, type Disciplina, type GalleryItem } from "@/content/galeria";
+import { galleryCopy } from "@/content/galeria";
+import type { Disciplina, GalleryRow } from "@/lib/data/types";
 import type { Locale } from "@/lib/i18n";
+import { mediaUrl } from "@/lib/supabase/config";
 import { useGalleryStore, type GalleryTab } from "@/stores/gallery-store";
 
 const BLOCKS: Disciplina[] = ["ruta", "montana"];
 
-export function GalleryGrid({ lang }: { lang: Locale }) {
+export function GalleryGrid({ lang, items }: { lang: Locale; items: GalleryRow[] }) {
   const t = galleryCopy[lang];
   const tab = useGalleryStore((s) => s.tab);
   const setTab = useGalleryStore((s) => s.setTab);
@@ -28,13 +30,17 @@ export function GalleryGrid({ lang }: { lang: Locale }) {
         label={nav(lang)}
         className="mb-8 gap-7 text-sm tracking-[.1em] [&>button]:pb-2"
       />
-      {BLOCKS.filter((d) => tab === "todas" || tab === d).map((d) => (
-        <div key={d} className="mb-7 grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-x-5 gap-y-7 last:mb-0">
-          {GALLERY.filter((item) => item.disciplina === d).map((item) => (
-            <Figure key={item.id} item={item} lang={lang} />
-          ))}
-        </div>
-      ))}
+      {BLOCKS.filter((d) => tab === "todas" || tab === d).map((d) => {
+        const list = items.filter((item) => item.disciplina === d);
+        if (!list.length) return null;
+        return (
+          <div key={d} className="mb-7 grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-x-5 gap-y-7 last:mb-0">
+            {list.map((item) => (
+              <Figure key={item.id} item={item} lang={lang} />
+            ))}
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -43,13 +49,13 @@ function nav(lang: Locale) {
   return lang === "es" ? "Filtrar por disciplina" : "Filter by discipline";
 }
 
-function Figure({ item, lang }: { item: GalleryItem; lang: Locale }) {
+function Figure({ item, lang }: { item: GalleryRow; lang: Locale }) {
   const t = galleryCopy[lang];
-  const descripcion = lang === "es" ? item.descripcion_es : item.descripcion_en;
+  const descripcion = lang === "en" && item.descripcion_en ? item.descripcion_en : item.descripcion_es;
   return (
     <figure className="m-0 flex flex-col gap-2.5">
       <PhotoSlot
-        src={item.src}
+        src={mediaUrl(item.image_path)}
         alt={descripcion}
         placeholder={item.disciplina === "ruta" ? t.placeholderRuta : t.placeholderMontana}
         className="h-[260px]"
@@ -57,7 +63,7 @@ function Figure({ item, lang }: { item: GalleryItem; lang: Locale }) {
       />
       <figcaption className="flex flex-col gap-1">
         <span className="text-[17px] leading-[1.35] text-white/85">{descripcion}</span>
-        {item.fotografo_url ? (
+        {!item.fotografo_handle ? null : item.fotografo_url ? (
           <a
             href={item.fotografo_url}
             target="_blank"

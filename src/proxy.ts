@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { defaultLocale, hasLocale, LOCALE_COOKIE, locales, type Locale } from "@/lib/i18n";
+import { updateSession } from "@/lib/supabase/proxy";
 
 function getLocale(request: NextRequest): Locale {
   const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
@@ -19,8 +20,11 @@ function getLocale(request: NextRequest): Locale {
   return defaultLocale;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // El admin no lleva prefijo de idioma; solo necesita mantener viva la sesión.
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return updateSession(request);
+
   const hasPrefix = locales.some(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );
@@ -31,6 +35,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Omitir internos de Next y archivos estáticos (con extensión)
-  matcher: ["/((?!_next|.*\\..*).*)"],
+  // Omitir internos de Next, rutas /api y archivos estáticos (con extensión)
+  matcher: ["/((?!_next|api/|.*\\..*).*)"],
 };

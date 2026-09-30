@@ -6,6 +6,7 @@ import { Eyebrow, InnerPage } from "@/components/site/inner-page";
 import { EquipoSection } from "@/components/sobre-mi/equipo";
 import { Timeline } from "@/components/sobre-mi/timeline";
 import { aboutCopy } from "@/content/sobre-mi";
+import { getHistory } from "@/lib/data/public";
 import { hasLocale, nav } from "@/lib/i18n";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/sobre-mi">): Promise<Metadata> {
@@ -17,6 +18,7 @@ export default async function SobreMiPage({ params }: PageProps<"/[lang]/sobre-m
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = aboutCopy[lang];
+  const { entries, initialId } = await getHistory(lang);
 
   const datos = [
     { label: t.edad, value: "14" },
@@ -64,7 +66,7 @@ export default async function SobreMiPage({ params }: PageProps<"/[lang]/sobre-m
 
       <EquipoSection lang={lang} />
 
-      <Timeline lang={lang} />
+      <Timeline lang={lang} entries={entries} initialId={initialId} />
     </InnerPage>
   );
 }

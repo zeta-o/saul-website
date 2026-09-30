@@ -5,7 +5,6 @@ import { barlow, velocity } from "@/lib/fonts";
 import { hasLocale, locales } from "@/lib/i18n";
 import "../globals.css";
 
-export const dynamicParams = false;
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));

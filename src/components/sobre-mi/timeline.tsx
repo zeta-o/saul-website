@@ -1,7 +1,10 @@
 "use client";
 
-import { aboutCopy, HISTORY, type HistoryEntry } from "@/content/sobre-mi";
+import { Fragment } from "react";
+
 import { PhotoSlot } from "@/components/site/photo-slot";
+import { aboutCopy } from "@/content/sobre-mi";
+import type { HistoryEntry } from "@/lib/data/historia";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useAboutStore } from "@/stores/about-store";
@@ -9,12 +12,20 @@ import { useAboutStore } from "@/stores/about-store";
 const parrafoCls = "m-0 text-lg leading-[1.6] text-white/78";
 const subCls = "mt-2.5 mb-0 text-[13px] leading-none font-semibold tracking-[.14em] text-brand-orange uppercase";
 
-export function Timeline({ lang }: { lang: Locale }) {
+export function Timeline({
+  lang,
+  entries: list,
+  initialId,
+}: {
+  lang: Locale;
+  entries: HistoryEntry[];
+  initialId?: string;
+}) {
   const t = aboutCopy[lang];
-  const list = HISTORY[lang];
   const year = useAboutStore((s) => s.year);
   const setYear = useAboutStore((s) => s.setYear);
-  const active = list.find((y) => y.id === year) ?? list[0];
+  const active = list.find((y) => y.id === (year ?? initialId)) ?? list[0];
+  if (!active) return null;
 
   return (
     <section className="mx-auto max-w-[1200px] px-4 pt-4 pb-24 md:px-8">
@@ -22,10 +33,10 @@ export function Timeline({ lang }: { lang: Locale }) {
 
       {/* En móvil la línea de tiempo hace scroll horizontal */}
       <div className="scrollbar-none -mx-4 mb-11 overflow-x-auto px-4 md:mx-0 md:overflow-visible md:px-0">
-        <div className="relative min-w-[520px] md:min-w-0" role="tablist" aria-label={t.historico}>
+        <div className="relative md:min-w-0" style={{ minWidth: list.length * 104 }} role="tablist" aria-label={t.historico}>
           {/* Centrada en los puntos: alto del año + gap (10px) + mitad de la caja del punto (9px) - 1px */}
           <div className="absolute inset-x-0 top-[calc(clamp(22px,2.6vw,34px)+18px)] h-0.5 bg-brand-blue/45" />
-          <div className="relative grid grid-cols-5">
+          <div className="relative grid" style={{ gridTemplateColumns: `repeat(${list.length}, minmax(0, 1fr))` }}>
             {list.map((y) => {
               const selected = y.id === active.id;
               return (
@@ -44,7 +55,7 @@ export function Timeline({ lang }: { lang: Locale }) {
                       selected ? "text-white" : "text-white/38 group-hover:text-white/70 group-focus-visible:text-white/70"
                     )}
                   >
-                    {y.year}
+                    {y.label}
                   </span>
                   <span className="flex h-[18px] items-center">
                     <span
@@ -76,11 +87,12 @@ function YearPanel({ entry, placeholder }: { entry: HistoryEntry; placeholder: s
       <div>
         <h2 className="mt-0 mb-3.5 text-[28px] leading-[1.15] font-bold text-white">{entry.titulo}</h2>
         <div className="mb-6 flex flex-col gap-3.5">
-          {entry.parrafos.map((p, i) => <p key={i} className={parrafoCls}>{p}</p>)}
-          {entry.subtitulo && <h3 className={subCls}>{entry.subtitulo}</h3>}
-          {entry.parrafos2?.map((p, i) => <p key={i} className={parrafoCls}>{p}</p>)}
-          {entry.subtitulo3 && <h3 className={subCls}>{entry.subtitulo3}</h3>}
-          {entry.parrafos3?.map((p, i) => <p key={i} className={parrafoCls}>{p}</p>)}
+          {entry.bloques.map((b, i) => (
+            <Fragment key={i}>
+              {b.subtitulo && <h3 className={subCls}>{b.subtitulo}</h3>}
+              {b.parrafos.map((p, j) => <p key={j} className={parrafoCls}>{p}</p>)}
+            </Fragment>
+          ))}
           {entry.cierre && (
             <p className="mt-3.5 mb-0 text-[clamp(22px,3vw,30px)] leading-[1.2] font-semibold tracking-[.06em] text-white uppercase">{entry.cierre}</p>
           )}
@@ -119,10 +131,19 @@ function YearPanel({ entry, placeholder }: { entry: HistoryEntry; placeholder: s
             className="col-span-2 h-[320px] w-full cursor-pointer rounded-xl bg-[#111] object-contain md:h-[440px]"
           />
         ) : (
-          <PhotoSlot alt={entry.titulo} placeholder={placeholder} className="col-span-2 h-[300px]" />
+          <PhotoSlot src={entry.fotos[0]} alt={entry.titulo} placeholder={placeholder} className="col-span-2 h-[300px]" sizes="(max-width: 1024px) 100vw, 640px" />
         )}
-        <PhotoSlot alt={entry.titulo} placeholder={placeholder} className="h-[140px] md:h-[180px]" sizes="(max-width: 1024px) 50vw, 320px" />
-        <PhotoSlot alt={entry.titulo} placeholder={placeholder} className="h-[140px] md:h-[180px]" sizes="(max-width: 1024px) 50vw, 320px" />
+        {/* Con video, las fotos 1 y 2 van abajo; sin video, la 0 es la grande. */}
+        {(entry.video ? [0, 1] : [1, 2]).map((i) => (
+          <PhotoSlot
+            key={i}
+            src={entry.fotos[i]}
+            alt={entry.titulo}
+            placeholder={placeholder}
+            className="h-[140px] md:h-[180px]"
+            sizes="(max-width: 1024px) 50vw, 320px"
+          />
+        ))}
       </div>
     </div>
   );

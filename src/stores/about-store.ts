@@ -1,16 +1,15 @@
 import { create } from "zustand";
 
-import { DEFAULT_YEAR, type HistoryEntry } from "@/content/sobre-mi";
-
 type AboutState = {
-  year: HistoryEntry["id"];
+  /** Año elegido por el visitante; null = el marcado como inicial en el admin. */
+  year: string | null;
   modalOpen: boolean;
-  setYear: (year: HistoryEntry["id"]) => void;
+  setYear: (year: string) => void;
   setModalOpen: (open: boolean) => void;
 };
 
 export const useAboutStore = create<AboutState>()((set) => ({
-  year: DEFAULT_YEAR,
+  year: null,
   modalOpen: false,
   setYear: (year) => set({ year }),
   setModalOpen: (modalOpen) => set({ modalOpen }),

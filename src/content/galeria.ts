@@ -1,17 +1,5 @@
+import type { GalleryRow } from "@/lib/data/types";
 import type { Locale } from "@/lib/i18n";
-
-export type Disciplina = "ruta" | "montana";
-
-/** Modelo de datos pensado para migrar luego a Supabase / CMS. */
-export type GalleryItem = {
-  id: string;
-  disciplina: Disciplina;
-  src?: string;
-  descripcion_es: string;
-  descripcion_en: string;
-  fotografo_handle: string;
-  fotografo_url?: string;
-};
 
 export const galleryCopy = {
   es: { todas: "Todas", ruta: "Ruta", montana: "Montaña", foto: "Foto", placeholderRuta: "Foto de ruta", placeholderMontana: "Foto de montaña" },
@@ -19,17 +7,37 @@ export const galleryCopy = {
 } satisfies Record<Locale, Record<string, string>>;
 
 // Pendiente: fotos reales y handles/URLs de fotógrafos.
-export const GALLERY: GalleryItem[] = [
-  { id: "gal-ruta-1", disciplina: "ruta", descripcion_es: "Campeonato Nacional de Ruta — Mayo 2026", descripcion_en: "National Road Championship — May 2026", fotografo_handle: "@fotografo" },
-  { id: "gal-ruta-2", disciplina: "ruta", descripcion_es: "Vuelta Juvenil — Mayo 2026", descripcion_en: "Vuelta Juvenil — May 2026", fotografo_handle: "@fotografo" },
-  { id: "gal-ruta-3", disciplina: "ruta", src: "/images/saul-v7-trimmed.png", descripcion_es: "Critérium de Palmares", descripcion_en: "Palmares Criterium", fotografo_handle: "@fotografo" },
-  { id: "gal-ruta-4", disciplina: "ruta", descripcion_es: "Critérium de San Isidro", descripcion_en: "San Isidro Criterium", fotografo_handle: "@fotografo" },
-  { id: "gal-ruta-5", disciplina: "ruta", descripcion_es: "Critérium de Santo Domingo", descripcion_en: "Santo Domingo Criterium", fotografo_handle: "@fotografo" },
-  { id: "gal-ruta-6", disciplina: "ruta", descripcion_es: "Critérium de Cartago", descripcion_en: "Cartago Criterium", fotografo_handle: "@fotografo" },
-  { id: "gal-mtb-1", disciplina: "montana", descripcion_es: "XCO — Primera fecha 2026", descripcion_en: "XCO — Round 1, 2026", fotografo_handle: "@fotografo" },
-  { id: "gal-mtb-2", disciplina: "montana", descripcion_es: "XCO — Segunda fecha 2026", descripcion_en: "XCO — Round 2, 2026", fotografo_handle: "@fotografo" },
-  { id: "gal-mtb-3", disciplina: "montana", descripcion_es: "Entrenamiento de montaña", descripcion_en: "Mountain training", fotografo_handle: "@fotografo" },
-  { id: "gal-mtb-4", disciplina: "montana", descripcion_es: "Entrenamiento de montaña", descripcion_en: "Mountain training", fotografo_handle: "@fotografo" },
-  { id: "gal-mtb-5", disciplina: "montana", descripcion_es: "Entrenamiento de montaña", descripcion_en: "Mountain training", fotografo_handle: "@fotografo" },
-  { id: "gal-mtb-6", disciplina: "montana", descripcion_es: "Entrenamiento de montaña", descripcion_en: "Mountain training", fotografo_handle: "@fotografo" },
+const item = (
+  id: string,
+  disciplina: GalleryRow["disciplina"],
+  orden: number,
+  descripcion_es: string,
+  descripcion_en: string,
+  image_path: string | null = null
+): GalleryRow => ({
+  id,
+  disciplina,
+  orden,
+  descripcion_es,
+  descripcion_en,
+  image_path,
+  fotografo_handle: "@fotografo",
+  fotografo_url: "",
+  publicado: true,
+});
+
+/** Respaldo cuando Supabase no está configurado; también es la semilla inicial. */
+export const GALLERY: GalleryRow[] = [
+  item("gal-ruta-1", "ruta", 10, "Campeonato Nacional de Ruta — Mayo 2026", "National Road Championship — May 2026"),
+  item("gal-ruta-2", "ruta", 20, "Vuelta Juvenil — Mayo 2026", "Vuelta Juvenil — May 2026"),
+  item("gal-ruta-3", "ruta", 30, "Critérium de Palmares", "Palmares Criterium", "/images/saul-v7-trimmed.png"),
+  item("gal-ruta-4", "ruta", 40, "Critérium de San Isidro", "San Isidro Criterium"),
+  item("gal-ruta-5", "ruta", 50, "Critérium de Santo Domingo", "Santo Domingo Criterium"),
+  item("gal-ruta-6", "ruta", 60, "Critérium de Cartago", "Cartago Criterium"),
+  item("gal-mtb-1", "montana", 10, "XCO — Primera fecha 2026", "XCO — Round 1, 2026"),
+  item("gal-mtb-2", "montana", 20, "XCO — Segunda fecha 2026", "XCO — Round 2, 2026"),
+  item("gal-mtb-3", "montana", 30, "Entrenamiento de montaña", "Mountain training"),
+  item("gal-mtb-4", "montana", 40, "Entrenamiento de montaña", "Mountain training"),
+  item("gal-mtb-5", "montana", 50, "Entrenamiento de montaña", "Mountain training"),
+  item("gal-mtb-6", "montana", 60, "Entrenamiento de montaña", "Mountain training"),
 ];

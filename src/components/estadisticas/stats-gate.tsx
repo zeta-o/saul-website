@@ -1,5 +1,8 @@
 "use client";
 
+import { useState, useTransition } from "react";
+
+import { solicitarAcceso } from "@/app/[lang]/estadisticas/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -123,17 +126,22 @@ function LoginForm({ lang }: { lang: Locale }) {
 function SolicitarForm({ lang }: { lang: Locale }) {
   const t = statsCopy[lang];
   const { nombre, correo, rol, social, updates, setField, setError } = useStatsStore();
+  const [website, setWebsite] = useState("");
+  const [pending, startTransition] = useTransition();
 
-  // Versión estática: valida y muestra confirmación; aún no se guarda en backend.
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim()) return setError(t.errorNombre);
     if (!EMAIL_RE.test(correo.trim())) return setError(t.errorCorreo);
-    setError(t.enviado);
+    startTransition(async () => {
+      const res = await solicitarAcceso({ nombre, correo, rol, social, updates, website });
+      if (res.ok) return setError(t.enviado);
+      setError(res.error === "nombre" ? t.errorNombre : res.error === "correo" ? t.errorCorreo : t.errorServidor);
+    });
   };
 
   return (
-    <form onSubmit={enviar} noValidate className="flex max-w-[420px] flex-col gap-3">
+    <form onSubmit={enviar} noValidate className="relative flex max-w-[420px] flex-col gap-3">
       <Input required autoComplete="name" value={nombre} onChange={(e) => setField("nombre", e.target.value)} placeholder={t.nombreReq} aria-label={t.nombreReq} />
       <Input required type="email" autoComplete="email" value={correo} onChange={(e) => setField("correo", e.target.value)} placeholder={t.correoReq} aria-label={t.correoReq} />
       <Input value={rol} autoComplete="organization-title" onChange={(e) => setField("rol", e.target.value)} placeholder={t.rolLabel} aria-label={t.rolLabel} />
@@ -145,7 +153,20 @@ function SolicitarForm({ lang }: { lang: Locale }) {
           <span className={notaCls}>{t.updatesNota}</span>
         </span>
       </label>
-      <Button type="submit" className="mt-1.5 self-start">{t.solicitar}</Button>
+      {/* Trampa para bots: oculto para personas y lectores de pantalla */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+        className="absolute -left-[9999px] h-0 w-0 opacity-0"
+      />
+      <Button type="submit" disabled={pending} className="mt-1.5 self-start">
+        {pending ? t.enviando : t.solicitar}
+      </Button>
       <Mensaje />
     </form>
   );
