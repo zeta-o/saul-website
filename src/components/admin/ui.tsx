@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { Label } from "@/components/ui/label";
+import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /** Título de página del admin. */
@@ -84,11 +85,12 @@ export function NotConfigured() {
 // Formato propio (no toLocaleString) para que servidor y navegador den el mismo texto
 // y no haya errores de hidratación.
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/** Fecha sin hora (columna date, "2026-09-30") → "30 sept 2026". */
-export function fechaCorta(fecha: string) {
+/** Fecha sin hora (columna date, "2026-09-30") → "30 sept 2026" / "Sep 30, 2026". */
+export function fechaCorta(fecha: string, lang: Locale = "es") {
   const [y, m, d] = fecha.slice(0, 10).split("-").map(Number);
-  return `${d} ${MESES[m - 1]} ${y}`;
+  return lang === "en" ? `${MONTHS[m - 1]} ${d}, ${y}` : `${d} ${MESES[m - 1]} ${y}`;
 }
 
 /** Timestamp → "30 sept 2026, 14:05" en hora de Costa Rica (UTC−6, sin horario de verano). */
@@ -99,8 +101,8 @@ export function fechaHora(iso: string) {
   return `${cr.getUTCDate()} ${MESES[cr.getUTCMonth()]} ${cr.getUTCFullYear()}, ${hh}:${mm}`;
 }
 
-/** Mes corto para ejes: "sept 26". */
-export function mesCorto(t: number) {
+/** Mes corto para ejes: "sept 26" / "Sep 26". */
+export function mesCorto(t: number, lang: Locale = "es") {
   const d = new Date(t);
-  return `${MESES[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`;
+  return `${(lang === "en" ? MONTHS : MESES)[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`;
 }
